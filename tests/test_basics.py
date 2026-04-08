@@ -74,6 +74,7 @@ def test_gamerom_ram_rtc(any_rom, patch_types, cart_ram, cart_rtc):
     assert os.path.exists(rtc) == cart_rtc
 
 
+
 @pytest.mark.parametrize(
     "patch_types, cart_ram, cart_rtc",
     [
@@ -101,6 +102,63 @@ def test_gamerom_filelike_object(any_rom, patch_types, cart_ram, cart_rtc):
     # If data written, we assert that the cartridge also has that feature
     assert (save_ram.tell() > 0) == cart_ram
     assert (save_rtc.tell() > 0) == cart_rtc
+def test_romonly_multibank_switching(any_rom):
+    rom = io.BytesIO()
+    with open(any_rom, "rb") as f:
+        data = f.read()
+
+    # Build a larger ROM-only image to cover homebrew/pirate carts with
+    # incomplete headers but valid bank-switch writes.
+    rom.write(data * 8)
+    rom.seek(0)
+    patch_cartridge(rom, 0x00, 0x00)
+
+    # Mark different values in bank 1 and bank 5 at the switchable ROM window.
+    rom.seek(0x4000)
+    rom.write(bytes([0x11]))
+    rom.seek(0x4000 * 5)
+    rom.write(bytes([0x55]))
+
+    rom.seek(0)
+    p = PyBoy(rom, window="null")
+
+    assert type(p.mb.cartridge).__name__ == "ROMOnly"
+    assert p.mb.cartridge.external_rom_count == 8
+    assert p.mb.getitem(0x4000) == 0x11
+
+    p.mb.setitem(0x2000, 5)
+
+    assert p.mb.cartridge.rombank_selected == 5
+    assert p.mb.getitem(0x4000) == 0x55
+    p.stop()
+
+
+def test_romonly_full_window_address_switching(any_rom):
+    rom = io.BytesIO()
+    with open(any_rom, "rb") as f:
+        data = f.read()
+
+    rom.write(data * 8)
+    rom.seek(0)
+    patch_cartridge(rom, 0x00, 0x00)
+
+    # Wisdom Tree-style mappers swap the full 32KB ROM window by using the
+    # lower address bits of the write, rather than the written value.
+    rom.seek(0x4000 * 4 + 0x0150)
+    rom.write(bytes([0x44]))
+    rom.seek(0x4000 * 5)
+    rom.write(bytes([0x55]))
+
+    rom.seek(0)
+    p = PyBoy(rom, window="null")
+
+    p.mb.setitem(0x0002, 0x99)
+
+    assert p.mb.cartridge.rombank_selected_low == 4
+    assert p.mb.cartridge.rombank_selected == 5
+    assert p.mb.getitem(0x0150) == 0x44
+    assert p.mb.getitem(0x4000) == 0x55
+    p.stop()
 
 
 def test_log_level_none(default_rom, capsys):
