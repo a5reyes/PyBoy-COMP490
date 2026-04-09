@@ -157,16 +157,25 @@ class BaseMBC:
             ]
         )
 
-# ROM-only cartridges are usually the simplest type: a fixed 32KB ROM and,
-# optionally, a small amount of RAM. Some unlicensed games, however, keep the
-# ROM-only header while still performing bank switching. Wisdom Tree titles are
-# a well-known example, so this class supports both the normal and non-standard
-# behaviors.
+# ROM-only is the simplest cartridge type.
+#
+# In the normal case:
+# - the cartridge is just 32KB total
+# - bank 0 is shown at 0x0000-0x3FFF
+# - bank 1 is shown at 0x4000-0x7FFF
+# - there is no real bank switching logic
+#
+# Some unlicensed or homebrew games are different. They still *claim* to be
+# ROM-only in the header, but the ROM is larger than 32KB and writes to the
+# cartridge control area are used to switch banks anyway. Wisdom Tree games are
+# a common example. This class keeps the simple ROM-only behavior, but also
+# handles those non-standard switching cases when more than two ROM banks exist.
 class ROMOnly(BaseMBC):
     """Handle cartridges marked as ROM-only.
 
-    Most ROM-only games never switch banks. A few oversized or unlicensed ROMs
-    still do, so writes in the cartridge control ranges are interpreted here.
+    A true ROM-only game is fixed and simple. If a cartridge reports ROM-only
+    but contains more than two ROM banks, it may actually be an oversized cart
+    that still performs bank switching through special write addresses.
     """
 
     def setitem(self, address, value):
@@ -178,10 +187,24 @@ class ROMOnly(BaseMBC):
         - 0x2000-0x3FFF: regular value-based bank selection for oversized ROMs.
         - 0xA000-0xBFFF: external RAM writes.
         """
+        # More than two ROM banks means the cartridge is larger than a normal
+        # 32KB ROM-only game. At that point, writes in the control region may
+        # need to be treated as bank-switch commands
         if self.external_rom_count > 2 and 0x0000 <= address < 0x2000:
             # Wisdom Tree-style mappers choose a *pair* of visible 16KB banks
-            # from the low byte of the address. Example: writing to 0x0002
-            # selects bank 4 for 0x0000-0x3FFF and bank 5 for 0x4000-0x7FFF.
+            # from the low byte of the address.
+            #
+            # Easy example:
+            # - write to 0x0000 -> page = 0 -> show banks 0 and 1
+            # - write to 0x0001 -> page = 1 -> show banks 2 and 3
+            # - write to 0x0002 -> page = 2 -> show banks 4 and 5
+            #
+            # So 0x0002 does NOT mean "switch to bank 2".
+            # Instead, the mapper reads the low byte of the address, doubles it,
+            # and uses that result to choose the next 32KB ROM chunk.
+            #
+            # `address & 0xFF` means "keep only the lowest 8 bits of the
+            # address". That low byte is the number this mapper uses.
             page = address & 0xFF
             self.rombank_selected_low = (page * 2) % self.external_rom_count
             self.rombank_selected = (self.rombank_selected_low + 1) % self.external_rom_count
@@ -196,10 +219,14 @@ class ROMOnly(BaseMBC):
             if value == 0:
                 value = 1
 
-            # Some homebrew and pirate cartridges still use the normal bank
-            # select register even though their header claims they are plain
-            # ROM-only. In that case, treat the written value as the new upper
-            # 16KB bank, while keeping bank 0 out of the switchable slot.
+            # This is the more standard style of switching: the written value is
+            # used as the bank number for the upper 16KB ROM window.
+            #
+            # So if the game writes value 5 here, PyBoy shows ROM bank 5 at
+            # 0x4000-0x7FFF.
+            #
+            # Bank 0 is avoided in the switchable slot because many cartridges
+            # reserve it for the fixed lower ROM area.
             self.rombank_selected = value % self.external_rom_count
             if self.external_rom_count > 1 and self.rombank_selected == 0:
                 self.rombank_selected = 1
