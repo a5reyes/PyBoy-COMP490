@@ -227,7 +227,7 @@
 >>>>>>         return b
        
 >>>>>>     def buttonevent(self, key):
-    7:         if self.interaction.key_event(key):
+    6:         if self.interaction.key_event(key):
     2:             self.cpu.set_interruptflag(INTR_HIGHTOLOW)
        
 >>>>>>     def stop(self, save, ram_file, rtc_file):

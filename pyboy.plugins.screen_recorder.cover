@@ -28,8 +28,8 @@
     1:         self.frames = []
        
 >>>>>>     def handle_events(self, events):
-   13:         for event in events:
-    7:             if event == WindowEvent.SCREEN_RECORDING_TOGGLE:
+   12:         for event in events:
+    6:             if event == WindowEvent.SCREEN_RECORDING_TOGGLE:
 >>>>>>                 self.recording ^= True
 >>>>>>                 if not self.recording:
 >>>>>>                     self.save()

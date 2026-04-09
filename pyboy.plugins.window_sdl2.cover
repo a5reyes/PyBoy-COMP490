@@ -106,20 +106,20 @@
 >>>>>> def sdl2_event_pump(events):
            global _sdlcontroller
            # Feed events into the loop
-   14:     for event in get_events():
-    8:         if event.type == sdl2.SDL_QUIT:
+   12:     for event in get_events():
+    6:         if event.type == sdl2.SDL_QUIT:
 >>>>>>             events.append(WindowEvent(WindowEvent.QUIT))
-    8:         elif event.type == sdl2.SDL_KEYDOWN:
+    6:         elif event.type == sdl2.SDL_KEYDOWN:
 >>>>>>             events.append(WindowEvent(KEY_DOWN.get(event.key.keysym.sym, WindowEvent.PASS)))
-    8:         elif event.type == sdl2.SDL_KEYUP:
+    6:         elif event.type == sdl2.SDL_KEYUP:
 >>>>>>             events.append(WindowEvent(KEY_UP.get(event.key.keysym.sym, WindowEvent.PASS)))
-    8:         elif event.type == sdl2.SDL_WINDOWEVENT:
-    3:             if event.window.windowID == 1:
-    3:                 if event.window.event == sdl2.SDL_WINDOWEVENT_FOCUS_LOST:
+    6:         elif event.type == sdl2.SDL_WINDOWEVENT:
+    2:             if event.window.windowID == 1:
+    2:                 if event.window.event == sdl2.SDL_WINDOWEVENT_FOCUS_LOST:
 >>>>>>                     events.append(WindowEvent(WindowEvent.WINDOW_UNFOCUS))
-    3:                 elif event.window.event == sdl2.SDL_WINDOWEVENT_FOCUS_GAINED:
+    2:                 elif event.window.event == sdl2.SDL_WINDOWEVENT_FOCUS_GAINED:
 >>>>>>                     events.append(WindowEvent(WindowEvent.WINDOW_FOCUS))
-    5:         elif event.type == sdl2.SDL_MOUSEWHEEL:
+    4:         elif event.type == sdl2.SDL_MOUSEWHEEL:
 >>>>>>             events.append(
 >>>>>>                 WindowEventMouse(
 >>>>>>                     WindowEvent._INTERNAL_MOUSE,
@@ -128,21 +128,21 @@
 >>>>>>                     mouse_scroll_y=event.wheel.y,
                        )
                    )
-    5:         elif event.type == sdl2.SDL_MOUSEMOTION or event.type == sdl2.SDL_MOUSEBUTTONUP:
-    1:             mouse_button = -1
-    1:             if event.type == sdl2.SDL_MOUSEBUTTONUP:
+    4:         elif event.type == sdl2.SDL_MOUSEMOTION or event.type == sdl2.SDL_MOUSEBUTTONUP:
+>>>>>>             mouse_button = -1
+>>>>>>             if event.type == sdl2.SDL_MOUSEBUTTONUP:
 >>>>>>                 if event.button.button == sdl2.SDL_BUTTON_LEFT:
 >>>>>>                     mouse_button = 0
 >>>>>>                 elif event.button.button == sdl2.SDL_BUTTON_RIGHT:
 >>>>>>                     mouse_button = 1
        
-    2:             events.append(
-    2:                 WindowEventMouse(
-    1:                     WindowEvent._INTERNAL_MOUSE,
-    1:                     window_id=event.motion.windowID,
-    1:                     mouse_x=event.motion.x,
-    1:                     mouse_y=event.motion.y,
-    1:                     mouse_button=mouse_button,
+>>>>>>             events.append(
+>>>>>>                 WindowEventMouse(
+>>>>>>                     WindowEvent._INTERNAL_MOUSE,
+>>>>>>                     window_id=event.motion.windowID,
+>>>>>>                     mouse_x=event.motion.x,
+>>>>>>                     mouse_y=event.motion.y,
+>>>>>>                     mouse_button=mouse_button,
                        )
                    )
     4:         elif event.type == sdl2.SDL_CONTROLLERDEVICEADDED:
@@ -229,8 +229,8 @@
        
 >>>>>>     def handle_events(self, events):
     6:         events = sdl2_event_pump(events)
-   13:         for e in events:
-    7:             if e == WindowEvent.FULL_SCREEN_TOGGLE:
+   12:         for e in events:
+    6:             if e == WindowEvent.FULL_SCREEN_TOGGLE:
 >>>>>>                 if self.fullscreen:
 >>>>>>                     sdl2.SDL_SetWindowFullscreen(self._window, 0)
                        else:

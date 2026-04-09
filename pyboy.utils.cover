@@ -363,13 +363,13 @@
 >>>>>>     ) = range(43)
        
 >>>>>>     def __init__(self, event):
-    7:         self.__event = event
+    6:         self.__event = event
        
 >>>>>>     def __eq__(self, other):
-  134:         if isinstance(other, WindowEvent):
+  105:         if isinstance(other, WindowEvent):
 >>>>>>             return self.__event == other.__event
-  134:         elif isinstance(other, int):
-  134:             return self.__event == other
+  105:         elif isinstance(other, int):
+  105:             return self.__event == other
 >>>>>>         return NotImplemented
        
 >>>>>>     def __int__(self):
@@ -427,13 +427,13 @@
 >>>>>>     def __init__(
 >>>>>>         self, *args, window_id=-1, mouse_x=-1, mouse_y=-1, mouse_scroll_x=-1, mouse_scroll_y=-1, mouse_button=-1
            ):
-    1:         super().__init__(*args)
-    1:         self.window_id = window_id
-    1:         self.mouse_x = mouse_x
-    1:         self.mouse_y = mouse_y
-    1:         self.mouse_scroll_x = mouse_scroll_x
-    1:         self.mouse_scroll_y = mouse_scroll_y
-    1:         self.mouse_button = mouse_button
+>>>>>>         super().__init__(*args)
+>>>>>>         self.window_id = window_id
+>>>>>>         self.mouse_x = mouse_x
+>>>>>>         self.mouse_y = mouse_y
+>>>>>>         self.mouse_scroll_x = mouse_scroll_x
+>>>>>>         self.mouse_scroll_y = mouse_scroll_y
+>>>>>>         self.mouse_button = mouse_button
        
        
 >>>>>> def _dec_to_bcd(bytes):

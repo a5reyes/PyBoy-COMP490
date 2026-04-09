@@ -22,47 +22,47 @@
     1:         self.standard = 0xF
        
 >>>>>>     def key_event(self, key):
-    7:         _directional = self.directional
-    7:         _standard = self.standard
-    7:         if key == WindowEvent.PRESS_ARROW_RIGHT:
+    6:         _directional = self.directional
+    6:         _standard = self.standard
+    6:         if key == WindowEvent.PRESS_ARROW_RIGHT:
     3:             self.directional = reset_bit(self.directional, P10)
-    4:         elif key == WindowEvent.PRESS_ARROW_LEFT:
+    3:         elif key == WindowEvent.PRESS_ARROW_LEFT:
 >>>>>>             self.directional = reset_bit(self.directional, P11)
-    4:         elif key == WindowEvent.PRESS_ARROW_UP:
+    3:         elif key == WindowEvent.PRESS_ARROW_UP:
 >>>>>>             self.directional = reset_bit(self.directional, P12)
-    4:         elif key == WindowEvent.PRESS_ARROW_DOWN:
+    3:         elif key == WindowEvent.PRESS_ARROW_DOWN:
 >>>>>>             self.directional = reset_bit(self.directional, P13)
        
-    4:         elif key == WindowEvent.PRESS_BUTTON_A:
+    3:         elif key == WindowEvent.PRESS_BUTTON_A:
 >>>>>>             self.standard = reset_bit(self.standard, P10)
-    4:         elif key == WindowEvent.PRESS_BUTTON_B:
+    3:         elif key == WindowEvent.PRESS_BUTTON_B:
 >>>>>>             self.standard = reset_bit(self.standard, P11)
-    4:         elif key == WindowEvent.PRESS_BUTTON_SELECT:
+    3:         elif key == WindowEvent.PRESS_BUTTON_SELECT:
 >>>>>>             self.standard = reset_bit(self.standard, P12)
-    4:         elif key == WindowEvent.PRESS_BUTTON_START:
+    3:         elif key == WindowEvent.PRESS_BUTTON_START:
     3:             self.standard = reset_bit(self.standard, P13)
        
-    1:         elif key == WindowEvent.RELEASE_ARROW_RIGHT:
+>>>>>>         elif key == WindowEvent.RELEASE_ARROW_RIGHT:
 >>>>>>             self.directional = set_bit(self.directional, P10)
-    1:         elif key == WindowEvent.RELEASE_ARROW_LEFT:
+>>>>>>         elif key == WindowEvent.RELEASE_ARROW_LEFT:
 >>>>>>             self.directional = set_bit(self.directional, P11)
-    1:         elif key == WindowEvent.RELEASE_ARROW_UP:
+>>>>>>         elif key == WindowEvent.RELEASE_ARROW_UP:
 >>>>>>             self.directional = set_bit(self.directional, P12)
-    1:         elif key == WindowEvent.RELEASE_ARROW_DOWN:
+>>>>>>         elif key == WindowEvent.RELEASE_ARROW_DOWN:
 >>>>>>             self.directional = set_bit(self.directional, P13)
        
-    1:         elif key == WindowEvent.RELEASE_BUTTON_A:
+>>>>>>         elif key == WindowEvent.RELEASE_BUTTON_A:
 >>>>>>             self.standard = set_bit(self.standard, P10)
-    1:         elif key == WindowEvent.RELEASE_BUTTON_B:
+>>>>>>         elif key == WindowEvent.RELEASE_BUTTON_B:
 >>>>>>             self.standard = set_bit(self.standard, P11)
-    1:         elif key == WindowEvent.RELEASE_BUTTON_SELECT:
+>>>>>>         elif key == WindowEvent.RELEASE_BUTTON_SELECT:
 >>>>>>             self.standard = set_bit(self.standard, P12)
-    1:         elif key == WindowEvent.RELEASE_BUTTON_START:
+>>>>>>         elif key == WindowEvent.RELEASE_BUTTON_START:
 >>>>>>             self.standard = set_bit(self.standard, P13)
        
                # XOR to find the changed bits, AND it to see if it was high before.
                # Test for both directional and standard buttons.
-    7:         return ((_directional ^ self.directional) & _directional) or ((_standard ^ self.standard) & _standard)
+    6:         return ((_directional ^ self.directional) & _directional) or ((_standard ^ self.standard) & _standard)
        
 >>>>>>     def pull(self, joystickbyte):
 >>>>>>         P14 = (joystickbyte >> 4) & 1

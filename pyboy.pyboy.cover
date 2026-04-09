@@ -645,20 +645,20 @@
     6:         if not self.no_input:
                    # This feeds events into the tick-loop from the window. There might already be events in the list from the API.
     6:             events = self._plugin_manager.handle_events(events)
-   13:         for event in events:
-    7:             if event == WindowEvent.QUIT:
+   12:         for event in events:
+    6:             if event == WindowEvent.QUIT:
 >>>>>>                 self.quitting = True
-    7:             elif event == WindowEvent.RELEASE_SPEED_UP:
+    6:             elif event == WindowEvent.RELEASE_SPEED_UP:
                        # Switch between unlimited and 1x real-time emulation speed
 >>>>>>                 self.target_emulationspeed = int(bool(self.target_emulationspeed) ^ True)
 >>>>>>                 logger.debug("Speed limit: %d", self.target_emulationspeed)
-    7:             elif event == WindowEvent.STATE_SAVE:
+    6:             elif event == WindowEvent.STATE_SAVE:
 >>>>>>                 if self.gamerom:
 >>>>>>                     with open(self.gamerom + ".state", "wb") as f:
 >>>>>>                         self.mb.save_state(IntIOWrapper(f))
                        else:
 >>>>>>                     logger.error("Failed to save game state. PyBoy is loaded without a filepath.")
-    7:             elif event == WindowEvent.STATE_LOAD:
+    6:             elif event == WindowEvent.STATE_LOAD:
 >>>>>>                 if self.gamerom:
 >>>>>>                     state_path = self.gamerom + ".state"
 >>>>>>                     if not os.path.isfile(state_path):
@@ -668,23 +668,23 @@
 >>>>>>                         self.mb.load_state(IntIOWrapper(f))
                        else:
 >>>>>>                     logger.error("Failed to load game state. PyBoy is loaded without a filepath.")
-    7:             elif event == WindowEvent.PASS:
+    6:             elif event == WindowEvent.PASS:
 >>>>>>                 pass  # Used in place of None in Cython, when key isn't mapped to anything
-    7:             elif event == WindowEvent.PAUSE_TOGGLE:
+    6:             elif event == WindowEvent.PAUSE_TOGGLE:
 >>>>>>                 if self.paused:
 >>>>>>                     self._unpause()
                        else:
 >>>>>>                     self._pause()
-    7:             elif event == WindowEvent.PAUSE:
+    6:             elif event == WindowEvent.PAUSE:
 >>>>>>                 self._pause()
-    7:             elif event == WindowEvent.UNPAUSE:
+    6:             elif event == WindowEvent.UNPAUSE:
 >>>>>>                 self._unpause()
-    7:             elif event == WindowEvent._INTERNAL_RENDERER_FLUSH:
+    6:             elif event == WindowEvent._INTERNAL_RENDERER_FLUSH:
 >>>>>>                 self._plugin_manager._post_tick_windows()
-    7:             elif event == WindowEvent.CYCLE_PALETTE:
+    6:             elif event == WindowEvent.CYCLE_PALETTE:
 >>>>>>                 self._cycle_palette()
                    else:
-    7:                 self.mb.buttonevent(event)
+    6:                 self.mb.buttonevent(event)
        
 >>>>>>     def _pause(self):
 >>>>>>         if self.paused:
@@ -1231,9 +1231,9 @@
                Args:
                    target_speed (int): Target emulation speed as multiplier of real-time.
                """
-    2:         if target_speed > 5:
+    1:         if target_speed > 5:
 >>>>>>             logger.warning("The emulation speed might not be accurate when speed-target is higher than 5")
-    2:         self.target_emulationspeed = target_speed
+    1:         self.target_emulationspeed = target_speed
        
 >>>>>>     def _load_symbols(self):
     1:         if self.rom_symbols:

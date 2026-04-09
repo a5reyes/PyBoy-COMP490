@@ -22,8 +22,8 @@
        
 >>>>>> class ScreenshotRecorder(PyBoyPlugin):
 >>>>>>     def handle_events(self, events):
-   13:         for event in events:
-    7:             if event == WindowEvent.SCREENSHOT_RECORD:
+   12:         for event in events:
+    6:             if event == WindowEvent.SCREENSHOT_RECORD:
 >>>>>>                 self.save()
 >>>>>>                 break
     6:         return events

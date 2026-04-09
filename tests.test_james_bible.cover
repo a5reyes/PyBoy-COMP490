@@ -12,7 +12,6 @@
        
 >>>>>> def bible():
     1:     pyboy = PyBoy("./roms/bible.gb")
-    1:     pyboy.set_emulation_speed(1.0)
     1:     pyboy.button_press("start")
     1:     pyboy.tick(1, True)
     1:     pyboy.button_press("start")

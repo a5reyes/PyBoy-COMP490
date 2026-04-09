@@ -29,15 +29,14 @@
     1:     cartinfo = CARTRIDGE_TABLE.get(carttype, None)
     1:     if cartinfo is None:
 >>>>>>         raise PyBoyException("Catridge type invalid: %s" % carttype)
-           
-    1:     cartinfo = check_rom(cartinfo, rombanks, external_ram_count)
+       
     4:     cart_line = ", ".join([x for x, y in zip(["SRAM", "Battery", "RTC"], cartinfo[1:]) if y])
     1:     cart_name = cartinfo[0].__name__
     1:     logger.debug("Cartridge type: 0x%0.2x - %s, %s", carttype, cart_name, cart_line)
     1:     logger.debug("Cartridge size: %d ROM banks of 16KB, %s RAM banks of 8KB", len(rombanks), external_ram_count)
-           #cartmeta = CARTRIDGE_TABLE[carttype]
+    1:     cartmeta = CARTRIDGE_TABLE[carttype]
        
-    1:     return cartinfo[0](rombanks, ram_file, rtc_file, external_ram_count, carttype, *cartinfo[1:])
+    1:     return cartmeta[0](rombanks, ram_file, rtc_file, external_ram_count, carttype, *cartmeta[1:])
        
        
 >>>>>> def validate_checksum(rombanks):
@@ -55,7 +54,7 @@
     1:     if len(romdata) == 0:
 >>>>>>         logger.error("ROM file is empty!")
 >>>>>>         raise PyBoyException("Empty ROM file")
-             
+       
     1:     banksize = 16 * 1024
     1:     if len(romdata) % banksize != 0:
 >>>>>>         raise PyBoyException(
@@ -64,20 +63,6 @@
        
     1:     return memoryview(romdata).cast("B", shape=(len(romdata) // banksize, banksize))
        
->>>>>> def check_rom(cartinfo, rombanks, external_ram_count):
-           #  1 ROM Bank = 16 KB = 16,000 bytes
-    1:     mb = (len(rombanks) * 16000) / 1000000
-    1:     if 0 <= mb <= 0.032:
->>>>>>         cartinfo = (ROMOnly,) + cartinfo[1:]
-    1:     elif 0.033 <= mb <= 0.256:
->>>>>>         cartinfo = (MBC2,) + cartinfo[1:]
-    1:     elif 0.257 <= mb <= 2 and 1 <= external_ram_count <= 4:
-    1:         cartinfo = (MBC1,) + cartinfo[1:]
->>>>>>     elif 0.257 <= mb <= 2 and 5 <= external_ram_count <= 8:
->>>>>>         cartinfo = (MBC3,) + cartinfo[1:]
->>>>>>     elif 3 <= mb <= 8:
->>>>>>         cartinfo = (MBC5,) + cartinfo[1:]
-    1:     return cartinfo
        
        # fmt: off
 >>>>>> CARTRIDGE_TABLE = {
