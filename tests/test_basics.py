@@ -102,7 +102,10 @@ def test_gamerom_filelike_object(any_rom, patch_types, cart_ram, cart_rtc):
     # If data written, we assert that the cartridge also has that feature
     assert (save_ram.tell() > 0) == cart_ram
     assert (save_rtc.tell() > 0) == cart_rtc
+
+
 def test_romonly_multibank_switching(any_rom):
+    """Verify that oversized ROM-only carts still honor 0x2000 bank writes."""
     rom = io.BytesIO()
     with open(any_rom, "rb") as f:
         data = f.read()
@@ -134,6 +137,7 @@ def test_romonly_multibank_switching(any_rom):
 
 
 def test_romonly_full_window_address_switching(any_rom):
+    """Verify Wisdom Tree-style carts swap both ROM halves from the address."""
     rom = io.BytesIO()
     with open(any_rom, "rb") as f:
         data = f.read()

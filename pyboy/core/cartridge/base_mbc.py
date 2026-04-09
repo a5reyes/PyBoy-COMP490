@@ -157,14 +157,31 @@ class BaseMBC:
             ]
         )
 
- #The ROM-only cartridge type is the simplest, with no bank switching. It contains a single 32KB ROM and up to 8KB of RAM. However, some unlicensed cartridges with more than 32KB of ROM also use the ROM-only header and switch the entire ROM window based on the lower address bits, so support for that behavior is included as well.
+# ROM-only cartridges are usually the simplest type: a fixed 32KB ROM and,
+# optionally, a small amount of RAM. Some unlicensed games, however, keep the
+# ROM-only header while still performing bank switching. Wisdom Tree titles are
+# a well-known example, so this class supports both the normal and non-standard
+# behaviors.
 class ROMOnly(BaseMBC):
+    """Handle cartridges marked as ROM-only.
+
+    Most ROM-only games never switch banks. A few oversized or unlicensed ROMs
+    still do, so writes in the cartridge control ranges are interpreted here.
+    """
+
     def setitem(self, address, value):
+        """Interpret writes to ROM-only cartridges.
+
+        Address ranges used here:
+        - 0x0000-0x1FFF: Wisdom Tree-style full 32KB window switching based on
+          the write address itself.
+        - 0x2000-0x3FFF: regular value-based bank selection for oversized ROMs.
+        - 0xA000-0xBFFF: external RAM writes.
+        """
         if self.external_rom_count > 2 and 0x0000 <= address < 0x2000:
-            # Wisdom Tree and similar unlicensed carts can masquerade as plain
-            # ROM-only cartridges even though they switch the entire 32KB ROM
-            # window. These carts select the active bank pair from the lower
-            # address bits, while the written value itself is ignored.
+            # Wisdom Tree-style mappers choose a *pair* of visible 16KB banks
+            # from the low byte of the address. Example: writing to 0x0002
+            # selects bank 4 for 0x0000-0x3FFF and bank 5 for 0x4000-0x7FFF.
             page = address & 0xFF
             self.rombank_selected_low = (page * 2) % self.external_rom_count
             self.rombank_selected = (self.rombank_selected_low + 1) % self.external_rom_count
@@ -179,10 +196,10 @@ class ROMOnly(BaseMBC):
             if value == 0:
                 value = 1
 
-            # Some homebrew and unlicensed multi-bank ROMs ship with a ROM-only
-            # cartridge header even though they still write to the bank register.
-            # Keep supporting the regular 32KB case, but allow selecting any
-            # available bank when the loaded ROM contains more than two banks.
+            # Some homebrew and pirate cartridges still use the normal bank
+            # select register even though their header claims they are plain
+            # ROM-only. In that case, treat the written value as the new upper
+            # 16KB bank, while keeping bank 0 out of the switchable slot.
             self.rombank_selected = value % self.external_rom_count
             if self.external_rom_count > 1 and self.rombank_selected == 0:
                 self.rombank_selected = 1
