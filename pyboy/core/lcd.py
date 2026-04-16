@@ -104,7 +104,23 @@ class LCD:
 
     def set_lcdc(self, value):
         _lcd_enable = self._LCDC.lcd_enable
+        _window_enable = self._LCDC.window_enable
         self._LCDC.set(value)
+
+        if _window_enable != self._LCDC.window_enable:
+            # Window enable changed mid-frame; clear any stale active-window state.
+            if self.renderer.wy_activated_frame:
+                self.renderer.wy_activated_frame = False
+                self.renderer.ly_window = -1
+                self.renderer.wy_reset_pending = False
+            elif self._STAT._mode == 2 and self.clock < self.clock_target:
+                self.renderer.wy_activated_frame = False
+                self.renderer.ly_window = -1
+                self.renderer.wy_reset_pending = False
+            else:
+                # Defer activation until the next valid line when WY changes outside mode 2.
+                self.renderer.wy_reset_pending = True
+                self.renderer.wy_activation_blocked = True
 
         if _lcd_enable and (not self._LCDC.lcd_enable):
             # https://www.reddit.com/r/Gameboy/comments/a1c8h0/what_happens_when_a_gameboy_screen_is_disabled/
@@ -179,6 +195,10 @@ class LCD:
                 self.clock %= FRAME_CYCLES
                 self.clock_target = 0
                 self.next_stat_mode = 2
+                # Clear any WY/window state carried over from the previous frame.
+                self.renderer.wy_activation_blocked = False
+                self.renderer.wy_reset_pending = False
+                self.renderer.ly_window = -1
                 # Fix: initialize window activation at frame start based on whether WY matches LY=0.
                 # This ensures games like Pokemon Crystal's Pokedex (which use WY=0) correctly
                 # activate the window layer on the very first scanline of each frame.
@@ -209,10 +229,15 @@ class LCD:
                     self.clock_target += 80
                     self.next_stat_mode = 3
                     interrupt_flag |= self._STAT.update_LYC(self.LYC, self.LY)
-                    # If this condition is not met in mode 2, at some point in this
-                    # frame, the window will not show.
-                    # FIXME: Strange Cython work-around. I thought I had fixed this.
-                    self.renderer.wy_activated_frame = self.renderer.wy_activated_frame | (self.WY == self.LY)
+                    if self.renderer.wy_reset_pending:
+                        self.renderer.wy_reset_pending = False
+                        self.renderer.wy_activated_frame = False
+                        self.renderer.ly_window = -1
+                    if not self.renderer.wy_activation_blocked:
+                        self.renderer.wy_activated_frame = (
+                            self.renderer.wy_activated_frame
+                            or (self._LCDC.window_enable and self.WY <= self.LY)
+                        )
                 elif self._STAT._mode == 3:
                     self.clock_target += 170
                     self.next_stat_mode = 0
@@ -251,6 +276,7 @@ class LCD:
                         # Fix: unconditionally reset window activation at VBlank so stale state
                         # from the previous frame never bleeds into the next one.
                         self.renderer.wy_activated_frame = False
+                        self.renderer.wy_activation_blocked = False
                         if self.first_frame:
                             # Pan Docs: https://gbdev.io/pandocs/LCDC.html#lcdc7--lcd-enable
                             # When re-enabling the LCD, the PPU will immediately start drawing again, but the screen
@@ -571,7 +597,10 @@ class Renderer:
 
         self._screenbuffer_ptr = c_void_p(self._screenbuffer_raw.buffer_info()[0])
 
-        self.ly_window = 0
+        # Window line counter starts at -1 so the first window scanline increments to 0.
+        self.ly_window = -1
+        self.wy_reset_pending = False
+        self.wy_activation_blocked = False
 
         # WY has a strange behavior described at:
         # https://gbdev.io/pandocs/Scrolling.html#window

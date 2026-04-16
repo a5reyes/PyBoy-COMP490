@@ -643,6 +643,17 @@ class Motherboard:
                     self.lcd.OBP1.set(value)
                 elif i == 0xFF4A:
                     self.lcd.WY = value
+                    # WY writes during an active frame can change whether the window activates
+                    # later in the same frame or must wait until the next eligible line.
+                    if self.lcd.renderer.wy_activated_frame:
+                        pass
+                    elif self.lcd._STAT._mode == 2 and self.lcd.clock < self.lcd.clock_target:
+                        self.lcd.renderer.wy_activated_frame = False
+                        self.lcd.renderer.ly_window = -1
+                        self.lcd.renderer.wy_reset_pending = False
+                    else:
+                        self.lcd.renderer.wy_reset_pending = True
+                        self.lcd.renderer.wy_activation_blocked = True
                 elif i == 0xFF4B:
                     self.lcd.WX = value
             else:

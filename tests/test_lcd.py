@@ -324,6 +324,25 @@ class TestLCD:
         assert lcd.LY == 0
         assert lcd.renderer.wy_activated_frame
 
+    def test_window_enable_midframe_defers_activation(self):
+        # Regression test: enabling the window mid-frame should not activate it
+        # immediately in the same scanline when WY has already been passed.
+        lcd = LCD(False, False, color_palette, cgb_color_palette)
+        lcd.set_lcdc(1 << 7)  # Enable LCD with window disabled
+        lcd._LCDC.value &= ~0x20  # Ensure window is currently disabled.
+        lcd.WY = 0
+        lcd.renderer.wy_activated_frame = False
+        lcd.renderer.ly_window = -1
+        lcd._STAT._mode = 3
+        lcd.clock = 1
+        lcd.clock_target = 170
+
+        lcd.set_lcdc(lcd._LCDC.value | 0x20)
+
+        assert lcd.renderer.wy_reset_pending
+        assert lcd.renderer.wy_activation_blocked
+        assert not lcd.renderer.wy_activated_frame
+
     def test_frame_cycles_toggle_off(self):
         lcd = LCD(False, False, color_palette, cgb_color_palette)
         assert not lcd._LCDC.lcd_enable

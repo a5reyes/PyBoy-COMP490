@@ -156,6 +156,9 @@ cdef class Renderer:
     cdef int[10] sprites_to_render
     cdef int ly_window
     cdef bint wy_activated_frame
+    # State used by nogil LCD timing paths for window activation/reset behavior.
+    cdef bint wy_reset_pending
+    cdef bint wy_activation_blocked
     cdef void invalidate_tile(self, int, int) noexcept nogil
 
     cdef void blank_screen(self) noexcept nogil
