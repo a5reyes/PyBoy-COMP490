@@ -179,6 +179,7 @@ class LCD:
                 self.clock %= FRAME_CYCLES
                 self.clock_target = 0
                 self.next_stat_mode = 2
+                self.renderer.wy_activated_frame = self.WY == self.LY
 
                 # Change to next mode
                 interrupt_flag |= self._STAT.set_mode(self.next_stat_mode)
@@ -244,8 +245,9 @@ class LCD:
 
                     if self.LY == 144:
                         interrupt_flag |= INTR_VBLANK
+                        # The window activation condition is tracked per frame.
+                        self.renderer.wy_activated_frame = False
                         if self.first_frame:
-                            self.renderer.wy_activated_frame = False
                             # Pan Docs: https://gbdev.io/pandocs/LCDC.html#lcdc7--lcd-enable
                             # When re-enabling the LCD, the PPU will immediately start drawing again, but the screen
                             # will stay blank during the first frame.

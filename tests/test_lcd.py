@@ -284,10 +284,44 @@ class TestLCD:
         # The maximum possible overshoot. Longest opcode is 24 cycles, minus 4, as the smallest missing cycles
         lcd.tick(FRAME_CYCLES + 20)
 
+    def test_window_activation_resets_each_frame(self):
+        lcd = LCD(True, True, color_palette, cgb_color_palette)
+        lcd.set_lcdc(1 << 7)  # Enable LCD
+
+        lcd.first_frame = False
+        lcd.renderer.wy_activated_frame = True
+        lcd.LY = 143
+        lcd._STAT._mode = 1
+        lcd.next_stat_mode = 1
+        lcd.clock = 0
+        lcd.clock_target = 0
+        lcd.last_cycles = 0
+
+        lcd.tick(1)
+
+        assert lcd.LY == 144
+        assert not lcd.renderer.wy_activated_frame
+
+    def test_window_activation_triggers_on_first_scanline(self):
+        lcd = LCD(True, True, color_palette, cgb_color_palette)
+        lcd.set_lcdc(1 << 7)  # Enable LCD
+
+        lcd.WY = 0
+        lcd.first_frame = False
+        lcd.reset = True
+        lcd.renderer.wy_activated_frame = False
+        lcd.last_cycles = 0
+        lcd.clock = 0
+        lcd.clock_target = 0
+
+        lcd.tick(1)
+
+        assert lcd.LY == 0
+        assert lcd.renderer.wy_activated_frame
+
     def test_frame_cycles_toggle_off(self):
         lcd = LCD(False, False, color_palette, cgb_color_palette)
         assert not lcd._LCDC.lcd_enable
-
         lcd.tick(FRAME_CYCLES - 1000)
         lcd.set_lcdc(1 << 7)  # Enable LCD
         assert lcd._LCDC.lcd_enable
