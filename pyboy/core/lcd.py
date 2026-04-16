@@ -179,6 +179,9 @@ class LCD:
                 self.clock %= FRAME_CYCLES
                 self.clock_target = 0
                 self.next_stat_mode = 2
+                # Fix: initialize window activation at frame start based on whether WY matches LY=0.
+                # This ensures games like Pokemon Crystal's Pokedex (which use WY=0) correctly
+                # activate the window layer on the very first scanline of each frame.
                 self.renderer.wy_activated_frame = self.WY == self.LY
 
                 # Change to next mode
@@ -245,7 +248,8 @@ class LCD:
 
                     if self.LY == 144:
                         interrupt_flag |= INTR_VBLANK
-                        # The window activation condition is tracked per frame.
+                        # Fix: unconditionally reset window activation at VBlank so stale state
+                        # from the previous frame never bleeds into the next one.
                         self.renderer.wy_activated_frame = False
                         if self.first_frame:
                             # Pan Docs: https://gbdev.io/pandocs/LCDC.html#lcdc7--lcd-enable

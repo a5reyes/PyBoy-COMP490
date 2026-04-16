@@ -285,6 +285,8 @@ class TestLCD:
         lcd.tick(FRAME_CYCLES + 20)
 
     def test_window_activation_resets_each_frame(self):
+        # Regression test: wy_activated_frame must be cleared at VBlank so
+        # a stale True value from one frame doesn't carry into the next.
         lcd = LCD(True, True, color_palette, cgb_color_palette)
         lcd.set_lcdc(1 << 7)  # Enable LCD
 
@@ -303,6 +305,9 @@ class TestLCD:
         assert not lcd.renderer.wy_activated_frame
 
     def test_window_activation_triggers_on_first_scanline(self):
+        # Regression test: when WY=0, wy_activated_frame must become True
+        # at frame start (LY=0) so the window layer renders from scanline 0.
+        # This was the root cause of the Pokemon Crystal Pokedex blank panel.
         lcd = LCD(True, True, color_palette, cgb_color_palette)
         lcd.set_lcdc(1 << 7)  # Enable LCD
 
