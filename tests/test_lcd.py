@@ -291,6 +291,7 @@ class TestLCD:
         lcd.set_lcdc(1 << 7)  # Enable LCD
 
         lcd.first_frame = False
+        lcd.reset = False  # set_lcdc leaves reset=True; clear it so tick() doesn't do a full frame reset
         lcd.renderer.wy_activated_frame = True
         lcd.LY = 143
         lcd._STAT._mode = 1
