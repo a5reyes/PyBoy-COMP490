@@ -64,7 +64,8 @@ class WindowOpenGL(WindowOpenAL):
             raise PyBoyException("OpenGL couldn't initialize!")
         glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA)
         glutInitWindowSize(*self._scaledresolution)
-        if not glutCreateWindow("PyBoy"):
+        # Convert window title to bytes for ctypes compatibility on Windows
+        if not glutCreateWindow(bytes("PyBoy", "ascii")):
             raise PyBoyException("OpenGL couldn't open window!")
         glutKeyboardFunc(self._key)
         glutKeyboardUpFunc(self._keyUp)
@@ -90,7 +91,10 @@ class WindowOpenGL(WindowOpenAL):
         self._glkeyboardspecial(c, x, y, True)
 
     def set_title(self, title):
-        glutSetWindowTitle(title)
+        # Convert title to bytes for ctypes compatibility on Windows
+        if isinstance(title, str):
+            title = title.encode("utf8")
+        glutSetWindowTitle(bytes(title))
 
     def handle_events(self, events):
         events += self.events
