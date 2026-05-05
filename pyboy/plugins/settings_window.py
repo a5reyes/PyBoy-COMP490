@@ -59,6 +59,9 @@ class SettingsWindow(PyBoyPlugin):
         self._var_pause = None
         self._vol_label = None
         self._palette_preview = None
+        # Key binding: button name -> label widget showing current key
+        self._keybind_labels = {}
+        self._awaiting_remap = None  # button name being remapped
 
     # ------------------------------------------------------------------
     # Plugin lifecycle
@@ -148,7 +151,7 @@ class SettingsWindow(PyBoyPlugin):
         tk.Label(root, text="Speed:", anchor="e").grid(
             row=3, column=0, sticky="e", **pad
         )
-        current_speed = getattr(self.pyboy, "target_emulationspeed", 1)
+        current_speed = getattr(self.pyboy, "target_emulationspeed", None) or 1
         self._var_speed = tk.IntVar(value=current_speed)
         speed_scale = tk.Scale(
             root,
@@ -202,12 +205,24 @@ class SettingsWindow(PyBoyPlugin):
         )
         pause_cb.grid(row=7, column=0, columnspan=2, sticky="w", padx=14, pady=4)
 
+        # ── Key Bindings ──────────────────────────────────────────────
+        sep_keys = ttk.Separator(root, orient="horizontal")
+        sep_keys.grid(row=8, column=0, columnspan=3, sticky="ew", **pad)
+
+        tk.Label(root, text="Key Bindings", font=("Helvetica", 11, "bold")).grid(
+            row=9, column=0, columnspan=3, pady=(4, 2)
+        )
+
+        self._keybind_labels = {}
+        self._awaiting_remap = None
+        self._build_keybind_rows(root, start_row=10, pad=pad)
+
         # ── Close button ──────────────────────────────────────────────
         separator4 = ttk.Separator(root, orient="horizontal")
-        separator4.grid(row=8, column=0, columnspan=3, sticky="ew", **pad)
+        separator4.grid(row=10 + len(self._keybind_labels), column=0, columnspan=3, sticky="ew", **pad)
 
         close_btn = ttk.Button(root, text="Close", command=self._close_window)
-        close_btn.grid(row=9, column=0, columnspan=3, pady=(4, 12))
+        close_btn.grid(row=11 + len(self._keybind_labels), column=0, columnspan=3, pady=(4, 12))
 
         # ── Key hints ─────────────────────────────────────────────────
         hint = tk.Label(
@@ -216,7 +231,7 @@ class SettingsWindow(PyBoyPlugin):
             fg="grey",
             font=("Helvetica", 9),
         )
-        hint.grid(row=10, column=0, columnspan=3, pady=(0, 8))
+        hint.grid(row=12 + len(self._keybind_labels), column=0, columnspan=3, pady=(0, 8))
 
         self._open = True
 
@@ -238,6 +253,8 @@ class SettingsWindow(PyBoyPlugin):
         self._var_pause = None
         self._vol_label = None
         self._palette_preview = None
+        self._keybind_labels = {}
+        self._awaiting_remap = None
 
     # ------------------------------------------------------------------
     # Callbacks – called by Tkinter on the main thread during update()
@@ -251,7 +268,7 @@ class SettingsWindow(PyBoyPlugin):
 
     def _on_speed_change(self, value):
         speed = int(float(value))
-        self.pyboy.target_emulationspeed = speed
+        self.pyboy.set_emulation_speed(speed)
 
     def _on_palette_change(self, _event=None):
         if self.cgb:
@@ -274,6 +291,104 @@ class SettingsWindow(PyBoyPlugin):
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    def _build_keybind_rows(self, root, start_row, pad):
+        """
+        Build one row per Game Boy button showing the current key and a Remap button.
+
+        Each row has three columns: button name label, current key display,
+        and a Remap button.  Clicking Remap switches the key display to
+        'Press a key…' and listens for the next KeyPress event via Tkinter.
+        """
+        try:
+            import tkinter as tk
+            from tkinter import ttk
+            from pyboy.plugins.window_sdl2 import GAMEBOY_BUTTONS, get_key_for_button
+            try:
+                import sdl2
+                _sdl2_available = True
+            except ImportError:
+                _sdl2_available = False
+        except ImportError:
+            return
+
+        def _sdl_key_name(keycode):
+            if keycode is None or not _sdl2_available:
+                return "(none)"
+            name = sdl2.SDL_GetKeyName(keycode)
+            if isinstance(name, bytes):
+                name = name.decode("utf-8", errors="replace")
+            return name
+
+        for i, (btn_name, (press_ev, _release_ev)) in enumerate(GAMEBOY_BUTTONS.items()):
+            row = start_row + i
+            tk.Label(root, text=f"{btn_name}:", anchor="e").grid(
+                row=row, column=0, sticky="e", **pad
+            )
+            current_key = _sdl_key_name(get_key_for_button(press_ev))
+            lbl = tk.Label(root, text=current_key, width=12, anchor="w", relief="sunken")
+            lbl.grid(row=row, column=1, sticky="w", **pad)
+            self._keybind_labels[btn_name] = lbl
+
+            def _make_remap(b=btn_name, lbl=lbl):
+                # Default-argument capture keeps b/lbl bound to this iteration.
+                def _click():
+                    # Record which button is waiting, update the label, then
+                    # grab keyboard focus so the next key goes to our handler.
+                    self._awaiting_remap = b
+                    lbl.config(text="Press a key…", fg="red")
+                    lbl.bind("<KeyPress>", self._on_remap_keypress)
+                    lbl.focus_set()
+                return _click
+
+            ttk.Button(root, text="Remap", command=_make_remap()).grid(
+                row=row, column=2, sticky="w", padx=(0, 10)
+            )
+
+    def _on_remap_keypress(self, event):
+        """
+        Handle the key press captured during a remap operation.
+
+        Converts the Tkinter keysym to an SDL2 keycode using
+        SDL_GetKeyFromName, calls remap_key() to update KEY_DOWN/KEY_UP,
+        and updates the label to show the new key name.
+        """
+        if self._awaiting_remap is None:
+            return
+        try:
+            import sdl2
+            from pyboy.plugins.window_sdl2 import GAMEBOY_BUTTONS, remap_key
+        except ImportError:
+            self._awaiting_remap = None
+            return
+
+        btn_name = self._awaiting_remap
+        self._awaiting_remap = None
+
+        press_ev, release_ev = GAMEBOY_BUTTONS[btn_name]
+
+        # SDL_GetKeyFromName expects bytes. Tkinter keysyms like "Return"
+        # match SDL names, but SDL uses lowercase for single characters
+        # ("a", "b") while Tkinter uses uppercase ("A", "B"), so we try
+        # the lowercase form as a fallback.
+        new_sdl_keycode = sdl2.SDL_GetKeyFromName(event.keysym.encode("utf-8"))
+        if new_sdl_keycode == sdl2.SDLK_UNKNOWN:
+            new_sdl_keycode = sdl2.SDL_GetKeyFromName(event.keysym.lower().encode("utf-8"))
+
+        lbl = self._keybind_labels.get(btn_name)
+        if new_sdl_keycode == sdl2.SDLK_UNKNOWN or new_sdl_keycode is None:
+            if lbl:
+                lbl.config(text="(unknown)", fg="orange")
+            return
+
+        remap_key(press_ev, release_ev, new_sdl_keycode)
+
+        key_name = sdl2.SDL_GetKeyName(new_sdl_keycode)
+        if isinstance(key_name, bytes):
+            key_name = key_name.decode("utf-8", errors="replace")
+        if lbl:
+            lbl.config(text=key_name, fg="black")
+            lbl.unbind("<KeyPress>")
 
     def _update_palette_preview(self):
         """Draw four tiny colour swatches on the canvas."""
