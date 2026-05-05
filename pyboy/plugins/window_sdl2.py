@@ -103,6 +103,54 @@ else:
     CONTROLLER_UP = {}
 # fmt: on
 
+# Maps each Game Boy button label to its (press, release) WindowEvent pair.
+# Used by the settings window to build the key-binding UI rows.
+GAMEBOY_BUTTONS = {
+    "Up":     (WindowEvent.PRESS_ARROW_UP,     WindowEvent.RELEASE_ARROW_UP),
+    "Down":   (WindowEvent.PRESS_ARROW_DOWN,   WindowEvent.RELEASE_ARROW_DOWN),
+    "Left":   (WindowEvent.PRESS_ARROW_LEFT,   WindowEvent.RELEASE_ARROW_LEFT),
+    "Right":  (WindowEvent.PRESS_ARROW_RIGHT,  WindowEvent.RELEASE_ARROW_RIGHT),
+    "A":      (WindowEvent.PRESS_BUTTON_A,     WindowEvent.RELEASE_BUTTON_A),
+    "B":      (WindowEvent.PRESS_BUTTON_B,     WindowEvent.RELEASE_BUTTON_B),
+    "Start":  (WindowEvent.PRESS_BUTTON_START, WindowEvent.RELEASE_BUTTON_START),
+    "Select": (WindowEvent.PRESS_BUTTON_SELECT,WindowEvent.RELEASE_BUTTON_SELECT),
+}
+
+
+def get_key_for_button(press_event):
+    """Return the SDL keycode currently mapped to a press WindowEvent, or None."""
+    # Linear scan is fine — KEY_DOWN has at most ~15 entries.
+    for keycode, event in KEY_DOWN.items():
+        if event == press_event:
+            return keycode
+    return None
+
+
+def remap_key(press_event, release_event, new_sdl_keycode):
+    """
+    Reassign a Game Boy button to a new SDL keycode.
+
+    Removes the old keycode entry for both press and release events and
+    inserts the new one.  Returns the old keycode that was replaced, or
+    None if there was no previous binding.
+    """
+    # Find and remove whatever key was previously bound to this button.
+    old_keycode = get_key_for_button(press_event)
+    if old_keycode is not None:
+        KEY_DOWN.pop(old_keycode, None)
+        KEY_UP.pop(old_keycode, None)
+
+    # If the new key was already doing something else, clear that first
+    # so we don't end up with two buttons on the same physical key.
+    KEY_DOWN.pop(new_sdl_keycode, None)
+    KEY_UP.pop(new_sdl_keycode, None)
+
+    # Register the new binding for both press and release directions.
+    KEY_DOWN[new_sdl_keycode] = press_event
+    KEY_UP[new_sdl_keycode] = release_event
+
+    return old_keycode
+
 
 def sdl2_event_pump(events):
     global _sdlcontroller
