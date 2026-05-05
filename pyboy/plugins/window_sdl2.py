@@ -68,6 +68,7 @@ if sdl2:
         sdl2.SDLK_RSHIFT    : WindowEvent.MOD_SHIFT_OFF,
         sdl2.SDLK_F11       : WindowEvent.FULL_SCREEN_TOGGLE,
         sdl2.SDLK_c         : WindowEvent.CYCLE_PALETTE,
+        sdl2.SDLK_F2        : WindowEvent.SETTINGS_TOGGLE,
     }
 
     CONTROLLER_DOWN = {

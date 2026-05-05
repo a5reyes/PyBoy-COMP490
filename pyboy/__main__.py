@@ -179,6 +179,7 @@ The other controls for the emulator:
 
 | Keyboard key | Emulator function       |
 | ---          | ---                     |
+| F2           | Open settings window    |
 | F11          | Toggle fullscreen       |
 | Escape       | Quit                    |
 | D            | Debug                   |
