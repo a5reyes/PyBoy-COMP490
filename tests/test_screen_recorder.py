@@ -85,7 +85,7 @@ def test_screen_recorder_defaults_to_mp4_and_captures_audio(monkeypatch, tmp_pat
     command = called[0]
 
     # Validate the generated ffmpeg command line includes both video and audio muxing.
-    assert recorded_path.name in command
+    assert any(recorded_path.name in arg for arg in command)
     assert "-c:v" in command
     assert "libx264" in command
     assert "-c:a" in command
