@@ -6,7 +6,7 @@ from pyboy import PyBoy
 ROM_PATH = Path(__file__).resolve().parents[1] / "roms" / "bible.gb"
 
 def test_bible():
-    pyboy = PyBoy(str(ROM_PATH), window="SDL2")
+    pyboy = PyBoy(str(ROM_PATH), window="null")
     try:
         pyboy.button_press("START")
         pyboy.tick(900, True) 
