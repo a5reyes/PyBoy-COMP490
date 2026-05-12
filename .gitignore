@@ -61,6 +61,7 @@ test_data.encrypted
 *.lock
 tetris/
 PyBoy-RL/
+!roms/bible.gb
 
 # Cython
 /pyboy/**/*.c
