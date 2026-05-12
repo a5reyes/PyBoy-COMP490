@@ -65,7 +65,7 @@ jobs:
         TEST_VERBOSE_IMAGES: 0
         TEST_NO_UI: 1
       run: |
-        ${{ ((matrix.os != 'windows-latest') && 'timeout 5m ') || ''}} python -m pytest tests/ -n auto -v --benchmark-disable
+        ${{ ((matrix.os != 'windows-latest') && 'timeout 5m ') || ''}} python -m pytest tests/ -v --benchmark-disable
     - name: Run PyTest Benchmark
       env:
         PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
@@ -170,7 +170,7 @@ jobs:
         TEST_VERBOSE_IMAGES: 0
         TEST_NO_UI: 1
       run: |
-        pypy3 -m pytest tests/ -n auto -v --benchmark-disable
+        pypy3 -m pytest tests/ -v --benchmark-disable
     - name: Run James Bible Tests
       env:
         PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
@@ -264,7 +264,7 @@ jobs:
           python setup.py build_ext -j $(getconf _NPROCESSORS_ONLN) --inplace
 
           echo "Starting pytests"
-          PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} TEST_NO_UI=1 python -m pytest tests/ -n auto -v --benchmark-disable
+          PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} TEST_NO_UI=1 python -m pytest tests/ -v --benchmark-disable
 
           echo "Running James Bible Tests"
           PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} python -m pytest tests/test_james_bible.py -v
