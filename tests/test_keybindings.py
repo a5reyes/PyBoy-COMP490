@@ -10,8 +10,8 @@ binding is changed.
 import pytest
 
 # We need sdl2 available for the keycode constants; skip the whole module
-# gracefully if it is not installed.
-sdl2 = pytest.importorskip("sdl2", reason="pysdl2 not installed")
+# gracefully if it is not installed or its shared library cannot be loaded.
+sdl2 = pytest.importorskip("sdl2", reason="pysdl2 not installed", exc_type=ImportError)
 
 from pyboy.plugins.window_sdl2 import (  # noqa: E402
     KEY_DOWN,
