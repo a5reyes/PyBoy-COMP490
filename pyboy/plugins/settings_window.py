@@ -28,8 +28,6 @@ DMG_PALETTE_PRESETS = {
 }
 
 PALETTE_NAMES = list(DMG_PALETTE_PRESETS.keys())
-RECORDING_FORMATS = ["mp4", "gif"]
-RECORDING_FPS_DEFAULT = 60
 
 
 class SettingsWindow(PyBoyPlugin):
@@ -43,7 +41,6 @@ class SettingsWindow(PyBoyPlugin):
     ----------------
     * **Volume** – master sound volume 0–100 %.
     * **Speed**  – emulation speed multiplier 0–5×  (0 = unlimited).
-    * **Recording** – output format and optional audio capture.
     * **Palette** – DMG colour palette preset (ignored in CGB mode).
     * **Pause**  – pause / resume the emulator.
     """
@@ -60,9 +57,6 @@ class SettingsWindow(PyBoyPlugin):
         self._var_speed = None
         self._var_palette = None
         self._var_pause = None
-        self._var_recording_format = None
-        self._var_recording_audio = None
-        self._audio_checkbox = None
         self._vol_label = None
         self._palette_preview = None
         # Key binding: button name -> label widget showing current key
@@ -172,57 +166,13 @@ class SettingsWindow(PyBoyPlugin):
         speed_hint = tk.Label(root, text="(0 = unlimited)", anchor="w", fg="grey")
         speed_hint.grid(row=3, column=2, sticky="w")
 
-        # ── Screen Recording ───────────────────────────────────────────
-        recorder = getattr(getattr(self.pyboy, "_plugin_manager", None), "screen_recorder", None)
-        recording_format = getattr(recorder, "recording_format", "mp4") if recorder else "mp4"
-        recording_audio = getattr(recorder, "recording_audio", True) if recorder else True
-
-        separator_rec = ttk.Separator(root, orient="horizontal")
-        separator_rec.grid(row=4, column=0, columnspan=3, sticky="ew", **pad)
-
-        tk.Label(root, text="Recording format:", anchor="e").grid(
-            row=5, column=0, sticky="e", **pad
-        )
-        self._var_recording_format = tk.StringVar(value=recording_format)
-        format_menu = ttk.Combobox(
-            root,
-            textvariable=self._var_recording_format,
-            values=RECORDING_FORMATS,
-            state="readonly",
-            width=18,
-        )
-        format_menu.grid(row=5, column=1, sticky="w", **pad)
-        format_menu.bind("<<ComboboxSelected>>", self._on_recording_format_change)
-
-        self._var_recording_audio = tk.BooleanVar(value=recording_audio)
-        self._audio_checkbox = tk.Checkbutton(
-            root,
-            text="Include audio (MP4 only)",
-            variable=self._var_recording_audio,
-            command=self._on_recording_audio_toggle,
-        )
-        self._audio_checkbox.grid(row=5, column=2, sticky="w", **pad)
-        if recording_format == "gif":
-            self._audio_checkbox.config(state="disabled")
-
-        # The recording frame rate remains fixed at the emulator default.
-        # This keeps the UI simple while still allowing format/audio selection.
-        recording_hint = tk.Label(
-            root,
-            text="Press I to start/stop recording.",
-            anchor="w",
-            fg="grey",
-            font=("Helvetica", 9),
-        )
-        recording_hint.grid(row=6, column=0, columnspan=3, sticky="w", padx=14, pady=(0, 4))
-
         # ── DMG Colour Palette ────────────────────────────────────────
         if not self.cgb:
             separator2 = ttk.Separator(root, orient="horizontal")
-            separator2.grid(row=7, column=0, columnspan=3, sticky="ew", **pad)
+            separator2.grid(row=4, column=0, columnspan=3, sticky="ew", **pad)
 
             tk.Label(root, text="Palette:", anchor="e").grid(
-                row=8, column=0, sticky="e", **pad
+                row=5, column=0, sticky="e", **pad
             )
             self._var_palette = tk.StringVar(value=PALETTE_NAMES[0])
             palette_menu = ttk.Combobox(
@@ -232,19 +182,19 @@ class SettingsWindow(PyBoyPlugin):
                 state="readonly",
                 width=18,
             )
-            palette_menu.grid(row=8, column=1, sticky="w", **pad)
+            palette_menu.grid(row=5, column=1, sticky="w", **pad)
             palette_menu.bind("<<ComboboxSelected>>", self._on_palette_change)
 
             # Small coloured preview squares
             self._palette_preview = tk.Canvas(
                 root, width=80, height=16, bg="white", highlightthickness=0
             )
-            self._palette_preview.grid(row=8, column=2, sticky="w")
+            self._palette_preview.grid(row=5, column=2, sticky="w")
             self._update_palette_preview()
 
         # ── Pause / Resume ────────────────────────────────────────────
         separator3 = ttk.Separator(root, orient="horizontal")
-        separator3.grid(row=9, column=0, columnspan=3, sticky="ew", **pad)
+        separator3.grid(row=6, column=0, columnspan=3, sticky="ew", **pad)
 
         self._var_pause = tk.BooleanVar(value=self.pyboy.paused)
         pause_cb = tk.Checkbutton(
@@ -253,26 +203,26 @@ class SettingsWindow(PyBoyPlugin):
             variable=self._var_pause,
             command=self._on_pause_toggle,
         )
-        pause_cb.grid(row=10, column=0, columnspan=2, sticky="w", padx=14, pady=4)
+        pause_cb.grid(row=7, column=0, columnspan=2, sticky="w", padx=14, pady=4)
 
         # ── Key Bindings ──────────────────────────────────────────────
         sep_keys = ttk.Separator(root, orient="horizontal")
-        sep_keys.grid(row=11, column=0, columnspan=3, sticky="ew", **pad)
+        sep_keys.grid(row=8, column=0, columnspan=3, sticky="ew", **pad)
 
         tk.Label(root, text="Key Bindings", font=("Helvetica", 11, "bold")).grid(
-            row=12, column=0, columnspan=3, pady=(4, 2)
+            row=9, column=0, columnspan=3, pady=(4, 2)
         )
 
         self._keybind_labels = {}
         self._awaiting_remap = None
-        self._build_keybind_rows(root, start_row=13, pad=pad)
+        self._build_keybind_rows(root, start_row=10, pad=pad)
 
         # ── Close button ──────────────────────────────────────────────
         separator4 = ttk.Separator(root, orient="horizontal")
-        separator4.grid(row=13 + len(self._keybind_labels), column=0, columnspan=3, sticky="ew", **pad)
+        separator4.grid(row=10 + len(self._keybind_labels), column=0, columnspan=3, sticky="ew", **pad)
 
         close_btn = ttk.Button(root, text="Close", command=self._close_window)
-        close_btn.grid(row=14 + len(self._keybind_labels), column=0, columnspan=3, pady=(4, 12))
+        close_btn.grid(row=11 + len(self._keybind_labels), column=0, columnspan=3, pady=(4, 12))
 
         # ── Key hints ─────────────────────────────────────────────────
         hint = tk.Label(
@@ -281,7 +231,7 @@ class SettingsWindow(PyBoyPlugin):
             fg="grey",
             font=("Helvetica", 9),
         )
-        hint.grid(row=15 + len(self._keybind_labels), column=0, columnspan=3, pady=(0, 8))
+        hint.grid(row=12 + len(self._keybind_labels), column=0, columnspan=3, pady=(0, 8))
 
         self._open = True
 
@@ -319,32 +269,6 @@ class SettingsWindow(PyBoyPlugin):
     def _on_speed_change(self, value):
         speed = int(float(value))
         self.pyboy.set_emulation_speed(speed)
-
-    def _get_screen_recorder(self):
-        if not hasattr(self.pyboy, "_plugin_manager"):
-            return None
-        return getattr(self.pyboy._plugin_manager, "screen_recorder", None)
-
-    def _on_recording_format_change(self, _event=None):
-        fmt = self._var_recording_format.get()
-        recorder = self._get_screen_recorder()
-        if recorder is not None:
-            recorder.recording_format = fmt
-
-        # Audio only applies to MP4 output. If GIF is selected, disable audio.
-        if self._audio_checkbox is not None:
-            if fmt == "gif":
-                self._audio_checkbox.config(state="disabled")
-                self._var_recording_audio.set(False)
-                self._on_recording_audio_toggle()
-            else:
-                self._audio_checkbox.config(state="normal")
-
-    def _on_recording_audio_toggle(self):
-        enabled = bool(self._var_recording_audio.get())
-        recorder = self._get_screen_recorder()
-        if recorder is not None:
-            recorder.recording_audio = enabled
 
     def _on_palette_change(self, _event=None):
         if self.cgb:

@@ -20,7 +20,7 @@ try:
 except ImportError:
     Image = None
 
-FPS = 60  # Default recording framerate for screen capture output
+FPS = 60
 
 
 class ScreenRecorder(PyBoyPlugin):
@@ -72,7 +72,6 @@ class ScreenRecorder(PyBoyPlugin):
         # Get recording format from CLI args (default: mp4)
         self.recording_format = self.pyboy_argv.get("recording_format", "mp4").lower()
         # Get recording FPS from CLI args (default: 60)
-        # This value is fixed in the settings window UI, but still honored for CLI users.
         self.recording_fps = max(1, int(self.pyboy_argv.get("recording_fps", FPS)))
         # Get recording audio flag from CLI args (default: enabled)
         self.recording_audio = self.pyboy_argv.get("recording_audio", True)
