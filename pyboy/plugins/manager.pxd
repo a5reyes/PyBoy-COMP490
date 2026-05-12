@@ -43,6 +43,7 @@ cdef class PluginManager:
     cdef public ScreenRecorder screen_recorder
     cdef public ScreenshotRecorder screenshot_recorder
     cdef public DebugPrompt debug_prompt
+    cdef public object settings_window
     cdef public GameWrapperSuperMarioLand game_wrapper_super_mario_land
     cdef public GameWrapperTetris game_wrapper_tetris
     cdef public GameWrapperKirbyDreamLand game_wrapper_kirby_dream_land
@@ -59,6 +60,7 @@ cdef class PluginManager:
     cdef bint screen_recorder_enabled
     cdef bint screenshot_recorder_enabled
     cdef bint debug_prompt_enabled
+    cdef bint settings_window_enabled
     cdef bint game_wrapper_super_mario_land_enabled
     cdef bint game_wrapper_tetris_enabled
     cdef bint game_wrapper_kirby_dream_land_enabled
