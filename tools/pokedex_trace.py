@@ -1,51 +1,3 @@
-"""
-Pokedex Trace Diagnostic Tool
-==============================
-
-PURPOSE:
-  This script diagnoses rendering issues in Pokemon Crystal's Pokedex screen by
-  continuously monitoring the Pokedex panel and detecting "blank-like" (mostly black
-  or single-color) states. When such states are detected, it captures:
-  - Full LCD register state (LCDC, STAT, LY, WY, WX, etc.)
-  - VRAM contents (background map, window map, tile data)
-  - Palette data (both background and object palettes)
-  - Screenshots for visual inspection
-  - Screen tilemap position data
-
-ROOT CAUSE IT HELPED IDENTIFY:
-  The wy_activated_frame boolean flag in the LCD renderer was leaking between frames
-  and not resetting at VBlank. When WY=0 (window should activate from scanline 0),
-  the flag was not being re-initialized at frame boundaries, causing the window layer
-  to fail rendering. This tool's logs revealed the pattern by showing the LCD state
-  at each "blank detection" event.
-
-USAGE:
-  python tools/pokedex_trace.py path/to/PokemonCrystal.gbc \\
-    --window SDL2 \\
-    --loadstate auto \\
-    --output trace_log.jsonl \\
-    --screenshot-dir screenshots/trace \\
-    --blank-log-interval 120
-
-  Then:
-  1. Open the Pokedex (select panel on the right)
-  2. Move over Pokemon entries to see blank panel detection
-  3. Close window or press Ctrl+C to stop
-  4. Inspect trace_log.jsonl and screenshots/trace/ for state analysis
-
-OUTPUT:
-  - trace_log.jsonl: JSONL file with frame-by-frame LCD state snapshots
-  - screenshots/trace/*.png: Screen captures at each state change
-  - Useful for debugging rendering edge cases and state machine issues
-
-INTEGRATION WITH FIXES:
-  After using this tool to identify the wy_activated_frame leak:
-  1. Regression tests were added to tests/test_lcd.py to verify the flag
-     properly resets at VBlank and activates correctly when WY=0
-  2. LCD frame-reset logic in pyboy/core/lcd.py was corrected to initialize
-     the flag at each frame boundary
-"""
-
 import argparse
 import hashlib
 import json
@@ -120,15 +72,6 @@ def read_palette_bytes(memory, index_addr, data_addr):
 
 
 def color_summary(region):
-    """
-    Analyze a screen region's color distribution to detect "blank-like" panels.
-    
-    A panel is considered "blank-like" if it has very high color dominance
-    (>= 90% of pixels are the same color) and few unique colors (<= 6).
-    This heuristic detects when the window layer fails to render.
-    
-    Returns dict with dominant_fraction, unique_colors, and top 4 colors.
-    """
     pixels = region.reshape(-1, region.shape[-1])
     counter = Counter(map(tuple, pixels.tolist()))
     top_colors = counter.most_common(4)
@@ -143,15 +86,6 @@ def color_summary(region):
 
 
 def panel_blank_metrics(pyboy):
-    """
-    Compute metrics for the Pokedex right panel to detect blank rendering.
-    
-    This focuses on the RIGHT_PANEL_Y / RIGHT_PANEL_X region where Pokemon
-    data is displayed. High dominant_fraction + low unique_colors indicates
-    the window layer is not rendering (leaving mostly black background).
-    
-    Returns dict with blank_like boolean and color metrics.
-    """
     region = pyboy.screen.ndarray[RIGHT_PANEL_Y, RIGHT_PANEL_X, :3]
     summary = color_summary(region)
     summary["blank_like"] = summary["dominant_fraction"] >= 0.9 and summary["unique_colors"] <= 6
@@ -159,21 +93,6 @@ def panel_blank_metrics(pyboy):
 
 
 def serialize_registers(pyboy):
-    """
-    Capture complete LCD and VRAM state into a serializable snapshot.
-    
-    This is the core diagnostic function. It extracts:
-    - All LCD control registers (LCDC, STAT, LY, WY, WX, etc.)
-    - VRAM contents: window map, background map, tile data from both banks
-    - Palette data: background and object color palettes
-    - Screen state: tilemap positions and scanline samples
-    
-    The snapshot is JSON-serializable and written to the trace log to build
-    a timeline of LCD state as the Pokedex panel transitions between blank
-    and non-blank renders. Useful for correlating state changes with flag resets.
-    
-    Returns dict snapshot with frame number, all register values, and VRAM hashes.
-    """
     memory = pyboy.memory
     registers = {name: memory[address] for name, address in REGISTERS.items()}
 
@@ -302,26 +221,6 @@ def maybe_save_state(pyboy, rom_path, savestate):
 
 
 def run_trace(args):
-    """
-    Main trace loop: run emulation and log LCD state when panel blank-ness changes.
-    
-    This function:
-    1. Loads the ROM and optionally a saved state (for fast navigation to Pokedex)
-    2. Starts the emulation loop at the specified speed
-    3. Each frame, analyzes the Pokedex panel for blank-like rendering
-    4. When blank-ness changes (True->False or False->True), captures:
-       - Full LCD/VRAM state via serialize_registers()
-       - Screenshot saved to screenshot_dir/
-       - Single-line entry appended to output JSONL log
-    5. Saves final state on exit (Ctrl+C or emulator quit)
-    
-    The JSONL log can be parsed to build a timeline and correlate blank panels
-    with specific LCD register values (especially WY, LCDC window enable, LY).
-    
-    This was critical for identifying the wy_activated_frame flag leak: the logs
-    showed the flag was not being reset at frame boundaries, causing the window
-    to fail rendering when WY=0.
-    """
     rom_path = Path(args.rom).resolve()
     output_path = Path(args.output).resolve()
     screenshot_dir = Path(args.screenshot_dir).resolve()
