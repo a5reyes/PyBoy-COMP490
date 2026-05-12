@@ -4,6 +4,7 @@
 #
 
 from pyboy import PyBoy
+from pyboy.utils import WindowEvent
 
 
 def test_screen_recorder_defaults_to_mp4_and_captures_audio(monkeypatch, tmp_path, default_rom):
@@ -17,13 +18,6 @@ def test_screen_recorder_defaults_to_mp4_and_captures_audio(monkeypatch, tmp_pat
     )
     try:
         recorder = pyboy._plugin_manager.screen_recorder
-
-        assert recorder.recording_format == "mp4"
-        assert recorder.recording_audio is True
-
-        recorder.recording = True
-        recorder.add_frame(pyboy.screen.image.copy())
-        recorder.audio_chunks.append(b"\x00\x01\x02\x03")
 
         recorded_path = tmp_path / "test_output.mp4"
 
@@ -40,6 +34,12 @@ def test_screen_recorder_defaults_to_mp4_and_captures_audio(monkeypatch, tmp_pat
             return None
 
         monkeypatch.setattr("pyboy.plugins.screen_recorder.subprocess.run", fake_run)
+
+        # Exercise recording through the public event path for compatibility with
+        # both Python and Cython plugin implementations.
+        pyboy.send_input(WindowEvent.SCREEN_RECORDING_TOGGLE)
+        for _ in range(20):
+            pyboy.tick()
 
         recorder.save(path=str(recorded_path), fps=30)
 
