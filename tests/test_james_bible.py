@@ -1,7 +1,12 @@
+from pathlib import Path
+
 from pyboy import PyBoy
 
+
+ROM_PATH = Path(__file__).resolve().parents[1] / "roms" / "bible.gb"
+
 def test_bible():
-    pyboy = PyBoy("./roms/bible.gb", window="SDL2")
+    pyboy = PyBoy(str(ROM_PATH), window="SDL2")
     try:
         pyboy.button_press("START")
         pyboy.tick(900, True) 
@@ -18,7 +23,7 @@ def test_bible():
         pyboy.stop()
 
 def test_wisdom_tree():
-    pyboy = PyBoy("./roms/bible.gb", window="null")
+    pyboy = PyBoy(str(ROM_PATH), window="null")
     cart = pyboy.mb.cartridge
 
     expected_low = cart.rombanks[4, 0x0150]
@@ -35,7 +40,7 @@ def test_wisdom_tree():
     pyboy.stop()
 
 def test_multibank():
-    pyboy = PyBoy("./roms/bible.gb", window="null")
+    pyboy = PyBoy(str(ROM_PATH), window="null")
     cart = pyboy.mb.cartridge
 
     expected_high = cart.rombanks[5, 0]
