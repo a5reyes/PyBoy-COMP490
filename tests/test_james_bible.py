@@ -24,30 +24,25 @@ def test_bible():
 
 def test_wisdom_tree():
     pyboy = PyBoy(str(ROM_PATH), window="null")
-    cart = pyboy.mb.cartridge
 
-    expected_low = cart.rombanks[4, 0x0150]
-    expected_high = cart.rombanks[5, 0]
+    expected_low = pyboy.memory[4, 0x0150]
+    expected_high = pyboy.memory[5, 0x4000]
 
-    pyboy.mb.setitem(0x0002, 0x99)
+    pyboy.memory[0x0002] = 0x99
 
-    assert cart.rombank_selected_low == 4
-    assert cart.rombank_selected == 5
-    assert pyboy.mb.getitem(0x0150) == expected_low
-    assert pyboy.mb.getitem(0x4000) == expected_high
+    assert pyboy.memory[0x0150] == expected_low
+    assert pyboy.memory[0x4000] == expected_high
 
     print("PASS: bible.gb Wisdom Tree switching works")
     pyboy.stop()
 
 def test_multibank():
     pyboy = PyBoy(str(ROM_PATH), window="null")
-    cart = pyboy.mb.cartridge
 
-    expected_high = cart.rombanks[5, 0]
-    pyboy.mb.setitem(0x2000, 5)
+    expected_high = pyboy.memory[5, 0x4000]
+    pyboy.memory[0x2000] = 5
 
-    assert cart.rombank_selected == 5
-    assert pyboy.mb.getitem(0x4000) == expected_high
+    assert pyboy.memory[0x4000] == expected_high
 
     print("PASS: bible.gb ROMOnly multibank switching works")
     pyboy.stop()
