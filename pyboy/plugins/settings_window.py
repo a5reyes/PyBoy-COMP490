@@ -98,6 +98,9 @@ class SettingsWindow(PyBoyPlugin):
     def enabled(self):
         return True
 
+    def window_title(self):
+        return ""
+
     # ------------------------------------------------------------------
     # Window creation / destruction
     # ------------------------------------------------------------------

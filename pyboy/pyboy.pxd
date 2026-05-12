@@ -39,7 +39,7 @@ cdef class PyBoyMemoryView:
     cdef int __setitem(self, int, int, int, object, int, bint, bint) except -1
 
 cdef class PyBoy:
-    cdef Motherboard mb
+    cdef public Motherboard mb
     cdef readonly PluginManager _plugin_manager
     cdef readonly uint64_t frame_count
     cdef readonly str gamerom
