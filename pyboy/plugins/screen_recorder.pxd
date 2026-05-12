@@ -12,6 +12,8 @@ cdef Logger logger
 cdef class ScreenRecorder(PyBoyPlugin):
     cdef bint recording
     cdef frames
+    cdef audio_chunks
     cdef recording_format  # Storage for selected output format (gif or mp4)
     cdef int recording_fps  # Storage for selected frame rate
+    cdef bint recording_audio
 
