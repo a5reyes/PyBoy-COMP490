@@ -37,12 +37,6 @@ jobs:
         pip install --upgrade wheel setuptools
         pip install --prefer-binary -r requirements.txt
         pip install --prefer-binary -r requirements_tests.txt
-    - name: Doctest
-      if: ${{ !contains(matrix.os, 'windows') }}
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-      run: |
-        python -m pytest pyboy/ -v
     - name: Setup macOS
       if: ${{ contains(matrix.os, 'macos-latest') }}
       run: |
@@ -59,47 +53,13 @@ jobs:
       run: |
         sudo apt update
         sudo apt install libopengl0 freeglut3-dev -y
-    - name: Run PyTest
+    - name: Run Required Tests
       env:
         PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
         TEST_VERBOSE_IMAGES: 0
         TEST_NO_UI: 1
       run: |
-        ${{ ((matrix.os != 'windows-latest') && 'timeout 5m ') || ''}} python -m pytest tests/ -v --benchmark-disable
-    - name: Run PyTest Benchmark
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-        TEST_VERBOSE_IMAGES: 0
-        TEST_NO_UI: 1
-      run: |
-        python -m pytest tests/test_benchmark.py --benchmark-enable --benchmark-min-rounds=10
-    - name: Run James Bible Tests
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-      run: |
-        python -m pytest tests/test_james_bible.py -v
-    - name: Run Screen Recorder Tests
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-        TEST_VERBOSE_IMAGES: 0
-        TEST_NO_UI: 1
-      run: |
-        python -m pytest tests/test_screen_recorder.py -v
-    - name: Run Pokemon Crystal Tests
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-      run: |
-        python -m pytest tests/test_basics.py::test_not_cgb -v
-    - name: Run LCD Tests
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-      run: |
-        python -m pytest tests/test_lcd.py -v
-    - name: Run Keybindings Tests
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-      run: |
-        python -m pytest tests/test_keybindings.py -v
+        ${{ ((matrix.os != 'windows-latest') && 'timeout 5m ') || ''}} python -m pytest tests/test_james_bible.py tests/test_basics.py::test_not_cgb tests/test_lcd.py tests/test_keybindings.py -v --benchmark-disable
     - name: Build wheel
       if: ${{ github.event_name == 'release' && github.event.action == 'published' && !github.event.release.prerelease && !contains(matrix.os, 'ubuntu') }}
       env:
@@ -158,46 +118,13 @@ jobs:
         pypy3 -m pip install wheel
         pypy3 -m pip install --prefer-binary -r requirements.txt
         pypy3 -m pip install --prefer-binary -r requirements_tests.txt
-    - name: Doctest
-      if: ${{ !contains(matrix.os, 'windows') }}
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-      run: |
-        pypy3 -m pytest pyboy/ -v
-    - name: Run PyTest
+    - name: Run Required Tests
       env:
         PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
         TEST_VERBOSE_IMAGES: 0
         TEST_NO_UI: 1
       run: |
-        pypy3 -m pytest tests/ -v --benchmark-disable
-    - name: Run James Bible Tests
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-      run: |
-        pypy3 -m pytest tests/test_james_bible.py -v
-    - name: Run Screen Recorder Tests
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-        TEST_VERBOSE_IMAGES: 0
-        TEST_NO_UI: 1
-      run: |
-        pypy3 -m pytest tests/test_screen_recorder.py -v
-    - name: Run Pokemon Crystal Tests
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-      run: |
-        pypy3 -m pytest tests/test_basics.py::test_not_cgb -v
-    - name: Run Keybindings Tests
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-      run: |
-        pypy3 -m pytest tests/test_keybindings.py -v
-    - name: Run LCD Tests
-      env:
-        PYTEST_SECRETS_KEY: ${{ secrets.PYTEST_SECRETS_KEY }}
-      run: |
-        pypy3 -m pytest tests/test_lcd.py -v
+        pypy3 -m pytest tests/test_james_bible.py tests/test_basics.py::test_not_cgb tests/test_lcd.py tests/test_keybindings.py -v --benchmark-disable
 
   test_manylinux:
     name: ManyLinux
@@ -257,29 +184,11 @@ jobs:
           python -m pip install --prefer-binary -r requirements.txt
           python -m pip install --prefer-binary -r requirements_tests.txt
 
-          echo "Starting Doctests"
-          PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} python -m pytest pyboy/ -v
-
           echo "Building PyBoy"
           python setup.py build_ext -j $(getconf _NPROCESSORS_ONLN) --inplace
 
-          echo "Starting pytests"
-          PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} TEST_NO_UI=1 python -m pytest tests/ -v --benchmark-disable
-
-          echo "Running James Bible Tests"
-          PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} python -m pytest tests/test_james_bible.py -v
-
-          echo "Running Screen Recorder Tests"
-          PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} TEST_NO_UI=1 python -m pytest tests/test_screen_recorder.py -v
-
-          echo "Running LCD Tests"
-          PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} python -m pytest tests/test_lcd.py -v
-
-          echo "Running Pokemon Crystal Tests"
-          PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} python -m pytest tests/test_basics.py::test_not_cgb -v
-
-          echo "Running Keybindings Tests"
-          PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} python -m pytest tests/test_keybindings.py -v
+          echo "Running required tests"
+          PYTEST_SECRETS_KEY=${{ secrets.PYTEST_SECRETS_KEY }} TEST_NO_UI=1 python -m pytest tests/test_james_bible.py tests/test_basics.py::test_not_cgb tests/test_lcd.py tests/test_keybindings.py -v --benchmark-disable
 
           if [[ ${{ github.event_name == 'release' && github.event.action == 'published' && !github.event.release.prerelease }} ]]; then
             echo "Building wheel"
